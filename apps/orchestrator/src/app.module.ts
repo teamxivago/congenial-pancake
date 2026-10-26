@@ -9,6 +9,8 @@ import { VideoActivity } from '@gitroom/orchestrator/activities/video.activity';
 import { MediaActivity } from '@gitroom/orchestrator/activities/media.activity';
 import { ClippingActivity } from '@gitroom/orchestrator/activities/clipping.activity';
 import { VideoModule } from '@gitroom/nestjs-libraries/videos/video.module';
+import { StudioModule } from '@gitroom/nestjs-libraries/studio/studio.module';
+import { StudioActivity } from '@gitroom/orchestrator/activities/studio.activity';
 import { HealthController } from '@gitroom/orchestrator/health.controller';
 
 const activities = [
@@ -19,11 +21,13 @@ const activities = [
   VideoActivity,
   MediaActivity,
   ClippingActivity,
+  StudioActivity,
 ];
 @Module({
   imports: [
     DatabaseModule,
     VideoModule,
+    StudioModule,
     getTemporalModule(true, require.resolve('./workflows'), activities),
   ],
   controllers: [HealthController],

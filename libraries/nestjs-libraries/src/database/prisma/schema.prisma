@@ -45,6 +45,10 @@ model Organization {
   webhooks            Webhooks[]
   oauthApp            OAuthApp[]
   oauthAuthorizations OAuthAuthorization[]
+  studioAutomations   StudioAutomation[]
+  studioTrends        StudioTrend[]
+  studioContents      StudioContent[]
+  studioProviderKeys  StudioProviderKey[]
 
   @@index([apiKey])
   @@index([streakSince])
@@ -705,6 +709,118 @@ model Sets {
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   @@index([organizationId])
+}
+
+// Studio: trend -> script -> video -> scheduled posts
+model StudioAutomation {
+  id             String          @id @default(uuid())
+  organizationId String
+  name           String
+  niche          String
+  keywords       String          @default("")
+  language       String          @default("en")
+  region         String          @default("US")
+  // JSON: [{ identifier, settings }] of trend sources
+  sources        String
+  instructions   String?
+  // cheap (local FFmpeg slideshow), ai (generator in videoProvider) or none (text posts)
+  videoMode      String          @default("cheap")
+  videoProvider  String?
+  // JSON of the provider's settings (model, duration, voice...)
+  videoSettings  String          @default("{}")
+  output         String          @default("vertical")
+  // JSON: string[] of integration ids
+  integrations   String
+  approveScript  Boolean         @default(false)
+  approvePost    Boolean         @default(false)
+  intervalHours  Int             @default(24)
+  maxPerDay      Int             @default(1)
+  active         Boolean         @default(false)
+  lastRunAt      DateTime?
+  // trend sources that failed on the last run
+  lastError      String?
+  deletedAt      DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  trends         StudioTrend[]
+  contents       StudioContent[]
+
+  @@index([organizationId])
+  @@index([deletedAt])
+}
+
+model StudioTrend {
+  id             String            @id @default(uuid())
+  organizationId String
+  automationId   String?
+  source         String
+  externalId     String
+  title          String
+  description    String?
+  url            String?
+  score          Float             @default(0)
+  usedAt         DateTime?
+  createdAt      DateTime          @default(now())
+  organization   Organization      @relation(fields: [organizationId], references: [id])
+  automation     StudioAutomation? @relation(fields: [automationId], references: [id])
+  contents       StudioContent[]
+
+  @@unique([organizationId, source, externalId])
+  @@index([automationId])
+  @@index([createdAt])
+}
+
+model StudioContent {
+  id             String            @id @default(uuid())
+  organizationId String
+  automationId   String?
+  trendId        String?
+  // pending, awaiting_script_approval, rendering, awaiting_post_approval, scheduled, failed, rejected
+  status         String            @default("pending")
+  topic          String
+  niche          String            @default("")
+  language       String            @default("en")
+  instructions   String?
+  title          String?
+  // JSON of the generated script (hook, scenes, voiceover, caption, hashtags)
+  script         String?
+  caption        String?
+  videoMode      String            @default("cheap")
+  videoProvider  String?
+  videoSettings  String            @default("{}")
+  output         String            @default("vertical")
+  integrations   String
+  approveScript  Boolean           @default(false)
+  approvePost    Boolean           @default(false)
+  mediaId        String?
+  videoPath      String?
+  publishDate    DateTime?
+  error          String?
+  deletedAt      DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  organization   Organization      @relation(fields: [organizationId], references: [id])
+  automation     StudioAutomation? @relation(fields: [automationId], references: [id])
+  trend          StudioTrend?      @relation(fields: [trendId], references: [id])
+
+  @@index([organizationId])
+  @@index([automationId])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+// API keys each organization brings for Studio (video generators, trend sources, LLM, voice)
+model StudioProviderKey {
+  id             String       @id @default(uuid())
+  organizationId String
+  provider       String
+  apiKey         String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, provider])
 }
 
 model ThirdParty {
