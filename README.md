@@ -1,3 +1,7 @@
+> **This fork adds Studio**: trending topics → AI script → video (cheap FFmpeg slideshow or any AI
+> video generator) → scheduled on every channel, with optional approvals.
+> See [deploy/STUDIO.md](deploy/STUDIO.md) and the VPS guide [deploy/vps/README.md](deploy/vps/README.md).
+
 <p align="center">
   <a href="https://postiz.com/" target="_blank">
   <picture>
